@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import {console} from "forge-std/console.sol";
 import {ScriptBase} from "forge-std/Base.sol";
-import {AgreementDetailsV1, Account, LockedAsset, Party} from "../src/RicardianTriplerDoubleTokenLexscrow.sol";
+import {AgreementDetails, Account, Party} from "../src/RicardianTriplerBORGParticipation.sol";
 
 // This function generates an account signature for EOAs. For ERC-1271 contracts
 // the method of signature generation may vary from contract to contract. Ensure
@@ -12,7 +12,7 @@ import {AgreementDetailsV1, Account, LockedAsset, Party} from "../src/RicardianT
 contract GenerateAccountSignatureV1 is ScriptBase {
     function run() external view {
         uint256 signerPrivateKey = vm.envUint("SIGNER_PRIVATE_KEY");
-        AgreementDetailsV1 memory details = getAgreementDetails();
+        AgreementDetails memory details = getAgreementDetails();
 
         // Generate the signature
         bytes32 hash = keccak256(abi.encode(details));
@@ -26,32 +26,22 @@ contract GenerateAccountSignatureV1 is ScriptBase {
     }
 
     /// @notice replace example with pertinent details
-    function getAgreementDetails() internal pure returns (AgreementDetailsV1 memory details) {
+    function getAgreementDetails() internal pure returns (AgreementDetails memory details) {
         Account memory account = Account({
             accountAddress: address(0xeaA33ea82591611Ac749b875aBD80a465219ab40),
             signature: new bytes(0)
         });
 
-        Party memory _partyA = Party({
+        Party memory _adoptingParty = Party({
             partyBlockchainAddy: address(1),
             partyName: "Party A",
             contactDetails: "partyA@email.com"
         });
-        Party memory _partyB = Party({
-            partyBlockchainAddy: address(2),
-            partyName: "Party B",
-            contactDetails: "partyB@email.com"
-        });
-        LockedAsset memory _lockedAssetPartyA = LockedAsset({tokenContract: address(3), totalAmount: 999999999999});
 
         details = AgreementDetailsV1({
-            partyA: _partyA,
-            partyB: _partyB,
-            lockedAssetPartyA: _lockedAssetPartyA,
-            lockedAssetPartyB: _lockedAssetPartyB,
-            legalAgreementURI: "ipfs://testHash",
-            governingLaw: "MetaLaW",
-            disputeResolutionMethod: "coin flip"
+            adoptingParty: _adoptingParty,
+            BORGName: "BORG Name",
+            legalAgreementURI: "ipfs://testHash"
         });
 
         return details;
