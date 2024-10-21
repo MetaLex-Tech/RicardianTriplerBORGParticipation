@@ -1,45 +1,43 @@
-// SPDX-License-Identifier: UNLICENSED
+//SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.18;
 
 import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
 import {Vm} from "forge-std/Vm.sol";
-import "../src/DoubleTokenLexscrowRegistry.sol";
+import "../src/BORGParticipationRegistry.sol";
 
-contract DoubleTokenLexscrowRegistryTest is Test {
+contract BORGParticipationRegistryTest is Test {
     address admin;
-    DoubleTokenLexscrowRegistry registry;
+    BORGParticipationRegistry registry;
 
     function setUp() public {
         admin = address(0xaa);
-        registry = new DoubleTokenLexscrowRegistry(admin);
+        registry = new BORGParticipationRegistry(admin);
     }
 
     function test_recordAdoption() public {
         address factory = address(0xff);
         address agreement = address(0xbb);
-        address confirmingParty = address(0xee);
-        address proposingParty = address(0xcc);
+        address adoptingParty = address(0xee);
 
         vm.prank(admin);
         registry.enableFactory(factory);
 
         vm.prank(factory);
-        registry.recordAdoption(confirmingParty, proposingParty, agreement);
+        registry.recordAdoption(adoptingParty, agreement);
     }
 
-    function test_adoptDoubleTokenLexscrow_disabledFactory() public {
+    function test_adoptBORGParticipation_disabledFactory() public {
         address factory = address(0xff);
         address agreement = address(0xbb);
-        address confirmingParty = address(0xee);
-        address proposingParty = address(0xcc);
+        address adoptingParty = address(0xee);
 
         vm.prank(admin);
         registry.disableFactory(factory);
 
         vm.prank(factory);
         vm.expectRevert(); //only approved, non-disabled factories
-        registry.recordAdoption(confirmingParty, proposingParty, agreement);
+        registry.recordAdoption(adoptingParty, agreement);
     }
 
     function test_enableFactory() public {
