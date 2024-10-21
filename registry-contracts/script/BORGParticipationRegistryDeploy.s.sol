@@ -1,12 +1,12 @@
-// SPDX-License-Identifier: UNLICENSED
+//SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.13;
 
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/console.sol";
-import {DoubleTokenLexscrowRegistry} from "../src/DoubleTokenLexscrowRegistry.sol";
-import {AgreementV1Factory} from "../src/RicardianTriplerDoubleTokenLexscrow.sol";
+import {BORGParticipationRegistry} from "../src/BORGParticipationRegistry.sol";
+import {AgreementV1Factory} from "../src/RicardianTriplerBORGParticipation.sol";
 
-contract DoubleTokenLexscrowRegistryDeploy is Script {
+contract BORGParticipationRegistryDeploy is Script {
     // This is a create2 factory deployed by a one-time-use-account as described here:
     // https://github.com/Arachnid/deterministic-deployment-proxy. As a result, this factory
     // exists (or can exist) on any EVM compatible chain, and gives us a guaranteed way to deploy
@@ -35,7 +35,7 @@ contract DoubleTokenLexscrowRegistryDeploy is Script {
         );
 
         vm.startBroadcast(deployerPrivateKey);
-        DoubleTokenLexscrowRegistry registry = new DoubleTokenLexscrowRegistry{
+        BORGParticipationRegistry registry = new BORGParticipationRegistry{
             salt: DETERMINISTIC_DEPLOY_SALT
         }(deployerAddress);
         address deployedRegistry = address(registry);
@@ -67,7 +67,7 @@ contract DoubleTokenLexscrowRegistryDeploy is Script {
                                 DETERMINISTIC_DEPLOY_SALT,
                                 keccak256(
                                     abi.encodePacked(
-                                        type(DoubleTokenLexscrowRegistry).creationCode,
+                                        type(BORGParticipationRegistry).creationCode,
                                         abi.encode(admin)
                                     )
                                 )
