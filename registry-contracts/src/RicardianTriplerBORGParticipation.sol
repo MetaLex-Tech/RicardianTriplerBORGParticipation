@@ -3,8 +3,7 @@ pragma solidity ^0.8.18;
 
 import "./SignatureValidator.sol";
 
-/// @author MetaLeX Labs, Inc.
-
+/// @notice interface to the BORG Participation Registry contract to record agreement adoptions
 interface IBORGParticipationRegistry {
     function recordAdoption(address adoptingParty, address agreementDetailsAddress) external;
 }
@@ -45,6 +44,8 @@ struct Party {
 /// CONTRACTS
 ///
 
+/// @title Ricardian Tripler BORG Participation
+/// @author MetaLeX Labs, Inc.
 /// @notice Contract that contains the BORG Participation agreement details that will be deployed by the Agreement Factory.
 contract RicardianTriplerBORGParticipation {
     uint256 internal constant AGREEMENT_VERSION = 1;
@@ -60,7 +61,8 @@ contract RicardianTriplerBORGParticipation {
         details.legalAgreementURI = _details.legalAgreementURI;
     }
 
-    /// @notice Function that returns the version of the agreement.
+    /// @notice Function that returns the version of the agreement
+    /// @return AGREEMENT_VERSION uint256 version of the tripler agreement
     function version() external pure returns (uint256) {
         return AGREEMENT_VERSION;
     }
@@ -73,6 +75,8 @@ contract RicardianTriplerBORGParticipation {
     }
 }
 
+/// @title BORG Participation Agreement V1 Factory
+/// @author MetaLeX Labs, Inc.
 /// @notice Factory contract that creates a new RicardianTriplerBORGParticipation contract if adopted properly, and records adoption in the BORGParticipationRegistry.
 /// @dev various events emitted in the `registry` contract
 contract AgreementV1Factory is SignatureValidator {
@@ -82,6 +86,7 @@ contract AgreementV1Factory is SignatureValidator {
     address public registry;
 
     error RicardianTriplerBORGParticipation_NotParty();
+    error RicardianTriplerBORGParticipation_InvalidSignature();
 
     /// @notice event that fires if an address adopts a new RicardianTriplerBORGParticipation contract
     event RicardianTriplerBORGParticipation_Adopted(address adoptingParty, address agreementAddress);
@@ -95,6 +100,7 @@ contract AgreementV1Factory is SignatureValidator {
 
     /// @notice creates a new RicardianTriplerBORGParticipation contract and records its adoption in the BORGParticipationRegistry if called by the `details.adoptingParty.partyBlockchainAddy`
     /// @param details `AgreementDetails` struct of the agreement details which will be hashed to ensure same parameters as the proposed agreement
+    /// @return address contract address of the newly adopted BORG Participation Agreement
     function adoptBORGParticipationAgreement(AgreementDetails calldata details) external returns (address) {
         if (msg.sender != details.adoptingParty.partyBlockchainAddy)
             revert RicardianTriplerBORGParticipation_NotParty();
@@ -108,17 +114,42 @@ contract AgreementV1Factory is SignatureValidator {
         return (_agreementAddress);
     }
 
+    /// @notice creates a new RicardianTriplerBORGParticipation contract and records its adoption in the BORGParticipationRegistry if a proper and validated signature is by the `details.adoptingParty.partyBlockchainAddy`
+    /// @param details `AgreementDetails` struct of the agreement details which will be hashed to ensure same parameters as the proposed agreement
+    /// @param adoptingPartyAccount `Account` struct for the adopting party, which will be used to validate the contained signature
+    /// @return address contract address of the newly adopted BORG Participation Agreement
+    function adoptBORGParticipationAgreementWithSignature(
+        AgreementDetails calldata details,
+        Account calldata adoptingPartyAccount
+    ) external returns (address) {
+        if (adoptingPartyAccount.accountAddress != details.adoptingParty.partyBlockchainAddy)
+            revert RicardianTriplerBORGParticipation_NotParty();
+        // revert if invalid signature
+        if (!validateAccount(details, adoptingPartyAccount))
+            revert RicardianTriplerBORGParticipation_InvalidSignature();
+
+        RicardianTriplerBORGParticipation agreementDetails = new RicardianTriplerBORGParticipation(details);
+
+        address _agreementAddress = address(agreementDetails);
+        IBORGParticipationRegistry(registry).recordAdoption(msg.sender, _agreementAddress);
+
+        emit RicardianTriplerBORGParticipation_Adopted(msg.sender, _agreementAddress);
+        return (_agreementAddress);
+    }
+
     /// @notice validate that an `account` has signed the hashed agreement details
     /// @param details `AgreementDetails` struct of the agreement details to which `account` is being validated as signed
     /// @param account `Account` struct of the account which is being validated as having signed `details`
-    function validateAccount(AgreementDetails calldata details, Account memory account) external view returns (bool) {
+    /// @return bool whether the `account.signature` is valid
+    function validateAccount(AgreementDetails calldata details, Account memory account) public view returns (bool) {
         bytes32 hash = keccak256(abi.encode(details));
 
         // Verify that the account's accountAddress signed the hashed details.
         return isSignatureValid(account.accountAddress, hash, account.signature);
     }
 
-    /// @notice Function that returns the version of the agreement factory.
+    /// @notice Function that returns the version of the agreement factory
+    /// @return FACTORY_VERSION uint256 version of the tripler agreement factory
     function version() external pure returns (uint256) {
         return FACTORY_VERSION;
     }
